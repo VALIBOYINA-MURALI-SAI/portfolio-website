@@ -1,0 +1,44 @@
+:root{
+  --primary: #007bff;
+  --gold: #ffd700;
+  --white: #ffffff;
+  --muted: #6c757d;
+}
+
+/* Basic reset and typography */
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:#fff;
+  color: #222;
+}
+
+/* navbar and hero */
+.navbar { background: var(--white); }
+.navbar .navbar-brand { color: var(--primary); }
+.text-primary { color: var(--primary) !important; }
+.text-gold { color: var(--gold); }
+
+.hero { background: linear-gradient(90deg, rgba(0,123,255,0.05), rgba(255,215,0,0.03)); }
+.profile { object-fit: cover; border: 6px solid var(--white); }
+
+/* Cards */
+.card { border-radius: 12px; }
+
+/* Buttons - give a subtle gold accent */
+.btn-outline-primary {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn-outline-primary:hover {
+  background: linear-gradient(90deg,var(--gold),var(--primary));
+  color: #fff;
+}
+
+/* Footer */
+footer { font-size: 0.9rem; color: var(--muted); }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .hero { text-align: center; }
+  .hero .profile { margin-top: 20px; }
+}
