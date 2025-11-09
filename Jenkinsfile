@@ -18,22 +18,26 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Auto-generate a version tag based on Jenkins build number
+                    // Dynamic tag based on Jenkins build number
                     IMAGE_TAG = "v${env.BUILD_NUMBER}"
-                    sh "docker build -t ${DOCKER_REPO}:${IMAGE_TAG} ."
-                    sh "docker tag ${DOCKER_REPO}:${IMAGE_TAG} ${DOCKER_REPO}:latest"
+                    sh """
+                        docker build -t ${DOCKER_REPO}:${IMAGE_TAG} .
+                        docker tag ${DOCKER_REPO}:${IMAGE_TAG} ${DOCKER_REPO}:latest
+                    """
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${DOCKER_REPO}:${IMAGE_TAG}
-                        docker push ${DOCKER_REPO}:latest
-                    '''
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                            docker push ${DOCKER_REPO}:${IMAGE_TAG}
+                            docker push ${DOCKER_REPO}:latest
+                        """
+                    }
                 }
             }
         }
@@ -41,14 +45,13 @@ pipeline {
         stage('Blue-Green Deployment to Kubernetes') {
             steps {
                 script {
-                    echo "Deploying Blue environment with image tag ${IMAGE_TAG}..."
-                    sh "kubectl set image -f ${DEPLOYMENT_BLUE} portfolio=${DOCKER_REPO}:${IMAGE_TAG} --local -o yaml | kubectl apply -f -"
-                    sh "kubectl rollout status deployment/portfolio-blue"
-
-                    echo "Switching Service to Blue deployment..."
-                    sh "kubectl apply -f k8s/service.yaml"
-
-                    echo "✅ Blue deployment completed successfully!"
+                    echo "Deploying image tag ${IMAGE_TAG} to Blue..."
+                    sh """
+                        kubectl set image -f ${DEPLOYMENT_BLUE} portfolio=${DOCKER_REPO}:${IMAGE_TAG} --local -o yaml | kubectl apply -f -
+                        kubectl rollout status deployment/portfolio-blue
+                        kubectl apply -f k8s/service.yaml
+                    """
+                    echo "✅ Blue deployment successful!"
                 }
             }
         }
