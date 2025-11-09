@@ -32,12 +32,13 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        def newTag = "v${env.BUILD_NUMBER}"
                         sh """
                             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                            docker push ${DOCKER_REPO}:${IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:latest
+                            docker push ${DOCKER_IMAGE}:${newTag}
+                            docker push ${DOCKER_IMAGE}:latest
                         """
                     }
                 }
