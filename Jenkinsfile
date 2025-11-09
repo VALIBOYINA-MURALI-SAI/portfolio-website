@@ -1,65 +1,59 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB_REPO = "DOCKERHUB_USER/murali-portfolio" // replace before running, or set as Jenkins var
-    IMAGE_TAG = "${env.BUILD_NUMBER ?: 'manual'}"
-    K8S_NAMESPACE = "default"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_IMAGE = "vms500/murali-portfolio"
+        DEPLOYMENT_BLUE = "k8s/deployment-blue.yaml"
+        DEPLOYMENT_GREEN = "k8s/deployment-green.yaml"
     }
 
-    stage('Build Image') {
-      steps {
-        sh "docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} ."
-      }
-    }
+    stages {
 
-    stage('Docker Login & Push') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-          sh "echo $DH_PASS | docker login -u $DH_USER --password-stdin"
-          sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/VALIBOYINA-MURALI-SAI/portfolio-website.git'
+            }
         }
-      }
-    }
 
-    stage('Deploy Green') {
-      steps {
-        // Replace image in green deployment and apply
-        sh "kubectl set image deployment/portfolio-green portfolio=${DOCKERHUB_REPO}:${IMAGE_TAG} --namespace=${K8S_NAMESPACE}"
-        sh "kubectl rollout status deployment/portfolio-green --namespace=${K8S_NAMESPACE} --timeout=120s"
-      }
-    }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def newTag = "v${env.BUILD_NUMBER}"
+                    sh "docker build -t ${DOCKER_IMAGE}:${newTag} ."
+                    sh "docker tag ${DOCKER_IMAGE}:${newTag} ${DOCKER_IMAGE}:latest"
+                }
+            }
+        }
 
-    stage('Switch Traffic to Green') {
-      steps {
-        // Patch the service selector to point to green
-        sh "kubectl patch service portfolio-service -p '{\"spec\":{\"selector\":{\"app\":\"portfolio\",\"version\":\"green\"}}}' --namespace=${K8S_NAMESPACE}"
-      }
-    }
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    def newTag = "v${env.BUILD_NUMBER}"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE}:${newTag}"
+                        sh "docker push ${DOCKER_IMAGE}:latest"
+                    }
+                }
+            }
+        }
 
-    stage('Optional: Scale Down Blue') {
-      steps {
-        // After successful switch, scale down blue or keep for rollback
-        sh "kubectl scale deployment portfolio-blue --replicas=0 --namespace=${K8S_NAMESPACE}"
-      }
-    }
-  }
+        stage('Blue-Green Deployment to Kubernetes') {
+            steps {
+                script {
+                    echo "Deploying to Blue environment..."
+                    sh "kubectl set image -f ${DEPLOYMENT_BLUE} portfolio=${DOCKER_IMAGE}:latest --local -o yaml | kubectl apply -f -"
 
-  post {
-    success {
-      echo "Deployment completed: ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                    echo "Verifying Blue deployment..."
+                    sh "kubectl rollout status deployment/portfolio-blue"
+
+                    echo "Switching Service to Blue deployment..."
+                    sh "kubectl apply -f k8s/service.yaml"
+
+                    echo "Blue deployment successful ✅"
+                }
+            }
+        }
     }
-    failure {
-      echo "Pipeline failed — consider rolling back service to blue."
-      // On failure, patch the service back to blue
-      sh "kubectl patch service portfolio-service -p '{\"spec\":{\"selector\":{\"app\":\"portfolio\",\"version\":\"blue\"}}}' --namespace=${K8S_NAMESPACE}"
-    }
-  }
 }
