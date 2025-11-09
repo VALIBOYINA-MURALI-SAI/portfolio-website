@@ -47,7 +47,7 @@ pipeline {
         stage('Blue-Green Deployment to Kubernetes') {
             steps {
                 script {
-                    echo "Deploying image vms500/murali-portfolio:${IMAGE_TAG} to Blue environment..."
+                    echo "Deploying image vms500/murali-portfolio:$latest to Blue environment..."
                     sh """
                         kubectl set image -f k8s/deployment-blue.yaml portfolio=vms500/murali-portfolio:latest --local -o yaml | kubectl apply -f -
                         kubectl rollout status deployment/portfolio-blue
