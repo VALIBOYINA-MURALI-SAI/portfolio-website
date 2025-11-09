@@ -49,9 +49,9 @@ pipeline {
                 script {
                     echo "Deploying image vms500/murali-portfolio:$latest to Blue environment..."
                     sh """
-                        kubectl set image -f k8s/deployment-blue.yaml portfolio=vms500/murali-portfolio:latest --local -o yaml | kubectl apply -f -
-                        kubectl rollout status deployment/portfolio-blue
-                        kubectl apply -f k8s/service.yaml
+                    kubectl set image -f k8s/deployment-blue.yaml portfolio=vms500/murali-portfolio:latest --local -o yaml | kubectl apply -f - && \
+                    kubectl rollout status deployment/portfolio-blue && \
+                    kubectl apply -f k8s/service.yaml
                     """
                     echo "✅ Blue deployment successful!"
                 }
