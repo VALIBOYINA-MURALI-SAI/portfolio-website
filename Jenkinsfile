@@ -18,8 +18,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Dynamic tag based on Jenkins build number
+                    // Generate a unique version tag for each Jenkins build
                     IMAGE_TAG = "v${env.BUILD_NUMBER}"
+
+                    echo "Building image: ${DOCKER_REPO}:${IMAGE_TAG}"
                     sh """
                         docker build -t ${DOCKER_REPO}:${IMAGE_TAG} .
                         docker tag ${DOCKER_REPO}:${IMAGE_TAG} ${DOCKER_REPO}:latest
@@ -34,7 +36,8 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
                             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                            docker push ${DOCKER_REPO}:v9
+                            docker push ${DOCKER_REPO}:${IMAGE_TAG}
+                            docker push ${DOCKER_REPO}:latest
                         """
                     }
                 }
@@ -44,7 +47,7 @@ pipeline {
         stage('Blue-Green Deployment to Kubernetes') {
             steps {
                 script {
-                    echo "Deploying image tag ${IMAGE_TAG} to Blue..."
+                    echo "Deploying image tag ${IMAGE_TAG} to Blue environment..."
                     sh """
                         kubectl set image -f ${DEPLOYMENT_BLUE} portfolio=${DOCKER_REPO}:${IMAGE_TAG} --local -o yaml | kubectl apply -f -
                         kubectl rollout status deployment/portfolio-blue
