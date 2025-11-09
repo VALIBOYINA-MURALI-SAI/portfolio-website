@@ -35,7 +35,7 @@ pipeline {
                         sh """
                             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                             docker push ${DOCKER_REPO}:${IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:latest
+                            docker push ${DOCKER_REPO}:v8
                         """
                     }
                 }
