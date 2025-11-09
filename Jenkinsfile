@@ -43,17 +43,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Blue-Green Deployment to Kubernetes') {
-            steps {
-                script {
-                    echo "Deploying image vms500/murali-portfolio:$latest to Blue environment..."
-                    sh """
-                    kubectl apply -f k8s/service.yaml
-                    """
-                    echo "✅ Blue deployment successful!"
-                }
-            }
-        }
     }
 }
