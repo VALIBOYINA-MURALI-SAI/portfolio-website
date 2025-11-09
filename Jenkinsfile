@@ -37,8 +37,7 @@ pipeline {
                         def newTag = "v${env.BUILD_NUMBER}"
                         sh """
                             echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                            docker push ${DOCKER_IMAGE}:${newTag}
-                            docker push ${DOCKER_IMAGE}:latest
+                            docker push vms500/murali-portfolio:latest
                         """
                     }
                 }
