@@ -28,10 +28,12 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                sh """
-                    echo \$DOCKER_USER_PSW | docker login -u \$DOCKER_USER_USR --password-stdin
-                    docker push vms500/murali-portfolio:v1
-                """
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push vms500/murali-portfolio:v1
+                    '''
+                }
             }
         }
 
