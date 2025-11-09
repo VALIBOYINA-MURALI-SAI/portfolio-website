@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_USER = credentials('dockerhub')
         DOCKER_IMAGE = "vms500/murali-portfolio"
         DEPLOYMENT_BLUE = "k8s/deployment-blue.yaml"
         DEPLOYMENT_GREEN = "k8s/deployment-green.yaml"
@@ -28,14 +28,10 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    def newTag = "v${env.BUILD_NUMBER}"
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                        sh "docker push ${DOCKER_IMAGE}:${newTag}"
-                        sh "docker push ${DOCKER_IMAGE}:latest"
-                    }
-                }
+                sh """
+                    echo \$DOCKER_USER_PSW | docker login -u \$DOCKER_USER_USR --password-stdin
+                    docker push vms500/murali-portfolio:v1
+                """
             }
         }
 
