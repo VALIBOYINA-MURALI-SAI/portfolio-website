@@ -18,7 +18,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Generate a unique version tag for each Jenkins build
+                    // Create a new tag based on Jenkins build number
                     IMAGE_TAG = "v${env.BUILD_NUMBER}"
 
                     echo "Building image: ${DOCKER_REPO}:${IMAGE_TAG}"
