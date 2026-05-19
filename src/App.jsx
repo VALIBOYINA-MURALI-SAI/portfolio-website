@@ -168,19 +168,6 @@ const githubProjectCards = githubRepoProjects.map((project) => ({
   stars: 0,
 }));
 
-const [githubRepos, setGithubRepos] = useState([]);
-const [repoError, setRepoError] = useState(false);
-
-useEffect(() => {
-  fetch('https://api.github.com/users/VALIBOYINA-MURALI-SAI/repos?per_page=100')
-    .then((res) => {
-      if (!res.ok) throw new Error('GitHub API rate or network issue');
-      return res.json();
-    })
-    .then((data) => setGithubRepos(data))
-    .catch(() => setRepoError(true));
-}, []);
-
 const achievements = [
   {
     title: 'Winner – SRM Hackathon 8.0',
