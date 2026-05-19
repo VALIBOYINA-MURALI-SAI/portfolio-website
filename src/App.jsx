@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import profileImage from '../assets/img/profile.png';
 
 const navLinks = [
@@ -162,6 +161,13 @@ const githubRepoProjects = [
   },
 ];
 
+const githubProjectCards = githubRepoProjects.map((project) => ({
+  ...project,
+  githubUrl: `https://github.com/VALIBOYINA-MURALI-SAI/${project.repoName}`,
+  repoDescription: project.description,
+  stars: 0,
+}));
+
 const achievements = [
   {
     title: 'Winner – SRM Hackathon 8.0',
@@ -250,28 +256,6 @@ const externalLinks = [
 ];
 
 function App() {
-  const [githubRepos, setGithubRepos] = useState([]);
-  const [repoError, setRepoError] = useState(false);
-
-  useEffect(() => {
-    fetch('https://api.github.com/users/VALIBOYINA-MURALI-SAI/repos?per_page=100')
-      .then((res) => {
-        if (!res.ok) throw new Error('GitHub API rate or network issue');
-        return res.json();
-      })
-      .then((data) => setGithubRepos(data))
-      .catch(() => setRepoError(true));
-  }, []);
-
-  const githubProjectCards = githubRepoProjects.map((project) => {
-    const repo = githubRepos.find((repoItem) => repoItem.name === project.repoName) || {};
-    return {
-      ...project,
-      githubUrl: repo.html_url || `https://github.com/VALIBOYINA-MURALI-SAI/${project.repoName}`,
-      repoDescription: repo.description || project.description,
-      stars: repo.stargazers_count ?? 0,
-    };
-  });
 
   return (
     <div className="app-shell">
@@ -388,11 +372,6 @@ function App() {
               Live project summaries pulled from my GitHub profile at <a href="https://github.com/VALIBOYINA-MURALI-SAI" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>github.com/VALIBOYINA-MURALI-SAI</a>.
             </p>
             <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-              {repoError && (
-                <div className="glass-card" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.15)', background: 'rgba(254, 242, 242, 0.8)' }}>
-                  <p style={{ color: '#991b1b', margin: 0 }}>Unable to fetch GitHub repos right now. Showing project metadata from the portfolio instead.</p>
-                </div>
-              )}
               {githubProjectCards.map((project) => (
                 <div key={project.repoName} className="repo-card glass-card">
                   <div className="repo-tags">
